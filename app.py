@@ -1,6 +1,5 @@
 import streamlit as st
 import os
-import PyPDF2
 import openai
 from gtts import gTTS
 import io
