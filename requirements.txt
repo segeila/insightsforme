@@ -2,3 +2,6 @@
 openai
 streamlit
 gtts
+pydub
+imageio-ffmpeg
+ffprobe
