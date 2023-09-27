@@ -35,9 +35,11 @@ def generate_audio(summary_text, path):
     # Save the audio in memory
     tts.save("voice.mp3")
 
+from pydub import AudioSegment
+
 def add_background_music(voice_path, music_path, output_path, delay_seconds=5, volume_adjustment=-10):
     """
-    Adds background music to a voice layover with a specified delay.
+    Adds background music to a voice layover with a specified delay and fade-in/out.
     
     Parameters:
         voice_path (str): Path to the voice layover audio file.
@@ -49,34 +51,33 @@ def add_background_music(voice_path, music_path, output_path, delay_seconds=5, v
     Returns:
         None: The combined audio is saved to `output_path`.
     """
-    # Load voice and music
-    voice = AudioSegment.from_file(voice_path, format="mp3")
-    music = AudioSegment.from_file(music_path, format="mp3")
-    
-    # Ensure both audio clips have the same frame rate and number of channels
-    voice = voice.set_frame_rate(music.frame_rate).set_channels(music.channels)
-    
-    # Optionally, lower the volume of the music
+    # Load the voice layover and background music audio files
+    voice = AudioSegment.from_file(voice_path)
+    music = AudioSegment.from_file(music_path)
+
+    # Calculate the length of the voice layover plus 10 seconds
+    total_length = len(voice) + 10000
+
+    # Cut the background music to the total length
+    music = music[:total_length]
+
+    # Add a fade-in of 5 seconds at the start of the background music
+    music = music.fade_in(5000)
+
+    # Add a fade-out of 5 seconds at the end of the background music
+    music = music.fade_out(5000)
+
+    # Adjust the volume of the background music
     music = music + volume_adjustment
-    
-    # Add delay to voice layover
-    delay_time = delay_seconds * 1000  # Convert to milliseconds
-    voice = AudioSegment.silent(duration=delay_time) + voice
-    
-    # Calculate lengths and make sure they match
-    voice_length = len(voice)
-    music_length = len(music)
-    
-    # If the music is shorter/longer, you might have to loop/cut it
-    if music_length < voice_length:
-        loops = voice_length // music_length + 1
-        music = music * loops
-    
-    # Overlay voice on music
-    combined = music.overlay(voice)
-    
-    # Export the mixed audio
-    combined.export(output_path, format="mp3")
+
+    # Add a delay to the voice layover
+    voice = voice + delay_seconds * 1000
+
+    # Combine the voice layover and background music
+    combined = voice.overlay(music)
+
+    # Save the combined audio to the output path
+    combined.export(output_path, format='mp3')
 
 # Example usage
 # add_background_music_with_delay("voice.mp3", "music.mp3", "combined_delayed.mp3")
